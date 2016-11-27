@@ -10,6 +10,17 @@ import sys
 def ranf():
 	return round((2/math.pi)*math.atan(random.expovariate(1.5)))
 
+def init_state(N):
+	psi = np.zeros(N)
+	psi[0] = 1
+	return psi
+
+def node_labels(N):
+	labels = {}
+	for i in xrange(0,N):
+		labels[i] = str(i)
+
+	return labels
 
 def random_adjacency_matrix(n):
     #matrix = [[random.randint(0, 1) for i in range(n)] for j in range(n)]
@@ -57,6 +68,7 @@ def remove_edge(ram, node):
 	return ram
 
 def update_conn(ram, psi):
+	N = ram.shape[0]
 	for idx, val in enumerate(psi):
 		if abs(val) > 1/math.sqrt(N):
 			ram = add_edge(ram, idx)
@@ -77,21 +89,20 @@ def update_graph(adjacency_matrix, grobj):
 
 	return grobj
 
-def show_graph(adjacency_matrix):
+def show_graph(adjacency_matrix, n):
 	# given an adjacency matrix use networkx and matlpotlib to plot the graph
-	n = 10
 	rows, cols = np.where(adjacency_matrix == 1)
 	edges = zip(rows.tolist(), cols.tolist())
 	gr = nx.Graph()
 
 	labels = {}
-	for i in xrange(0,10):
+	for i in xrange(0,n):
 		labels[i] = str(i)
 
 	size = []
-	for k in xrange(0,10):
-		xcoord = math.cos(2*math.pi*k/n)
-		ycoord = math.sin(2*math.pi*k/n)
+	for k in xrange(0,n):
+		xcoord = (1./5)*n*math.cos(2*math.pi*k/n)
+		ycoord = (1./5)*n*math.sin(2*math.pi*k/n)
 		gr.add_node(k, pos=(xcoord,ycoord))
 		size += [500]
 
@@ -114,66 +125,110 @@ def show_graph(adjacency_matrix):
 	#plt.show()
 	return gr
 
-N = 10 #Number of nodes in system
-labels = {}
-for i in xrange(0,10):
-	labels[i] = str(i)
+def program(N, T, ET):
+	dt = 0.5 # time step
+	currtime = 0 # current time
+	time_limit = T # End time
+	t = 1 # Hopping Strength
+	edge_update = ET # Time interval between edge updating 
+					# - i.e. either adding or removing edges
 
-t = 1 #Hopping strength
-ram = random_adjacency_matrix(N)
-H = -t*ram
+	# Create node labels
+	labels = node_labels(N)
 
-w, v = np.linalg.eig(H)
-#psi_init = v[:,0]
-psi_init = np.matrix('1;0;0;0;0;0;0;0;0;0')
-#print v[:,0]
+	# initialize random adjacency matrix
+	ram = random_adjacency_matrix(N)
 
-#sys.exit(1)
+	# Create Hamiltonian for the system
+	H = -t*ram
 
-dt = 0.5 #The tiem for the rhyme
-U = linalg.expm(-1j*H*dt)
+	# Find eigenvalues, w, and eigenvectors v of the Hamiltonian
+	w, v = np.linalg.eig(H)
 
-tid = 0
-graphobj = show_graph(ram)
-pos = nx.get_node_attributes(graphobj, 'pos')
+	# Initialize the state
+	psi = init_state(N)
 
-#time.sleep(1)
-#
-#plt.show()
-psi = psi_init
-print 'time is: 0'
-while tid <= 5:
-	density = np.absolute(psi)
-	node_sizes = [(500)*(1+x) for x in density]
-	time.sleep(0.5)
-	plt.clf()
-	#nx.draw_networkx_nodes(graphobj, pos, node_size=node_sizes)
-	#nx.draw_networkx_edges(graphobj, pos, alpha=0.3)
-	nx.draw(graphobj, pos, node_size=node_sizes)
-	nx.draw_networkx_labels(graphobj, pos, labels, font_size=16)
-	plt.show()
-	plt.pause(0.05)
-	tid += dt
+	# Calculate time-evolution operator
+	U = linalg.expm(-1j*H*dt)
 
-	if tid % 3 == 0:
-		raw_input('1111')
-		print np.absolute(psi)*math.sqrt(N)
-		ram = update_conn(ram, psi)
-		H = -t*ram
-		U = linalg.expm(-1j*H*dt)
+	# Create the graph object
+	graphobj = show_graph(ram, N)
+
+	# Find the position of the nodes in the graph object
+	pos = nx.get_node_attributes(graphobj, 'pos')
+
+	print 'time is: 0'
+	while currtime < time_limit:
+		# Calculate probability density
+		density = np.absolute(psi)
+
+		# Rescale the nodes according to their density
+		node_sizes = [(500)*(1+x) for x in density]
+
+		# wait
+		time.sleep(0.5)
+
+		# Clear the whole figure
 		plt.clf()
-		graphobj = update_graph(ram, graphobj)
+
+		# Redraw figure
 		nx.draw(graphobj, pos, node_size=node_sizes)
+
+		# Redraw node labels
 		nx.draw_networkx_labels(graphobj, pos, labels, font_size=16)
+
+		# Show the graph
 		plt.show()
-		plt.pause(0.05)		
-		raw_input('2222')
+		plt.pause(0.05)
 
-	psi = np.dot(U, psi)
-	print 'time is: ' + str(tid)
-	
+		# increment the timestep
+		currtime += dt
 
-raw_input('sjdhfkjsd')
+		# Add/remove edges
+		if currtime % edge_update == 0:
+			#raw_input('1111')
+			#print np.absolute(psi)*math.sqrt(N)
+
+			# Update the RAM
+			ram = update_conn(ram, psi)
+
+			# Recalculate the Hamiltonian and time-evolution operator
+			H = -t*ram
+			U = linalg.expm(-1j*H*dt)
+
+			# Clear figure then redraw figure and node labels
+			plt.clf()
+			graphobj = update_graph(ram, graphobj)
+			nx.draw(graphobj, pos, node_size=node_sizes)
+			nx.draw_networkx_labels(graphobj, pos, labels, font_size=16)
+			plt.show()
+			plt.pause(0.05)
+
+
+			#raw_input('2222')
+
+		# Time-evovle state vector
+		psi = np.dot(U, psi)
+		print 'time is: ' + str(currtime)
+		
+
+	raw_input('sjdhfkjsd')
+
+def main():
+	args = sys.argv[1:]
+
+	if not args:
+		print 'usage: nodes time edge_time'
+		sys.exit(1)
+
+	N = int(args[0])
+	T = int(args[1])
+	ET = int(args[2])
+
+	program(N, T, ET)
+
+if __name__ == '__main__':
+  main()
 
 
 
