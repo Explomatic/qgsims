@@ -8,19 +8,22 @@ import time
 import sys
 
 def ranf():
-	return round((2/math.pi)*math.atan(random.expovariate(1.5)))
+	return(round((2/math.pi)*math.atan(random.expovariate(1.5))))
+
 
 def init_state(N):
 	psi = np.zeros(N)
 	psi[0] = 1
-	return psi
+	return(psi)
+
 
 def node_labels(N):
 	labels = {}
 	for i in xrange(0,N):
 		labels[i] = str(i)
 
-	return labels
+	return(labels)
+
 
 def random_adjacency_matrix(n):
     #matrix = [[random.randint(0, 1) for i in range(n)] for j in range(n)]
@@ -35,7 +38,8 @@ def random_adjacency_matrix(n):
         for j in range(n):
             matrix[j][i] = matrix[i][j]
 
-    return np.matrix(matrix)
+    return(np.matrix(matrix))
+
 
 def add_edge(ram, node):
 	N = ram.shape[0]
@@ -44,9 +48,10 @@ def add_edge(ram, node):
 		ram[node,temp] = 1
 		ram[temp,node] = 1
 		ram[node,node] = 0
-		print 'Edge added to node #' + str(node) + ' from node #' + str(temp)
+		print('Edge added to node #' + str(node) + ' from node #' + str(temp))
 
-	return ram
+	return(ram)
+
 
 def remove_edge(ram, node):
 	tempv = ram[:,node]
@@ -60,12 +65,13 @@ def remove_edge(ram, node):
 		if random.randint(0,1) == 1:
 			ram[node,save_idx[temp]] = 0
 			ram[save_idx[temp],node] = 0
-			print 'Edge removed from node #' + str(node) + ' to node #' + str(save_idx[temp])
+			print('Edge removed from node #' + str(node) + ' to node #' + str(save_idx[temp]))
 	except ValueError:
 		print 'No edges to remove'
-		return ram
+		return(ram)
 
-	return ram
+	return(ram)
+
 
 def update_conn(ram, psi):
 	N = ram.shape[0]
@@ -76,7 +82,8 @@ def update_conn(ram, psi):
 		else:
 			ram = remove_edge(ram, idx)
 
-	return ram
+	return(ram)
+
 
 def update_graph(adjacency_matrix, grobj):
 	rows, cols = np.where(adjacency_matrix == 1)
@@ -88,6 +95,7 @@ def update_graph(adjacency_matrix, grobj):
 	grobj.remove_edges_from(edges)
 
 	return grobj
+
 
 def show_graph(adjacency_matrix, n):
 	# given an adjacency matrix use networkx and matlpotlib to plot the graph
@@ -123,7 +131,8 @@ def show_graph(adjacency_matrix, n):
 	# is too busy just do: nx.draw_networkx(G,with_labels=False)
 	plt.ion()
 	#plt.show()
-	return gr
+	return(gr)
+
 
 def program(N, T, ET):
 	dt = 0.5 # time step
@@ -157,7 +166,7 @@ def program(N, T, ET):
 	# Find the position of the nodes in the graph object
 	pos = nx.get_node_attributes(graphobj, 'pos')
 
-	print 'time is: 0'
+	print('time is: 0')
 	while currtime < time_limit:
 		# Calculate probability density
 		density = np.absolute(psi)
@@ -209,16 +218,17 @@ def program(N, T, ET):
 
 		# Time-evovle state vector
 		psi = np.dot(U, psi)
-		print 'time is: ' + str(currtime)
+		print('time is: ' + str(currtime))
 		
 
 	raw_input('sjdhfkjsd')
+
 
 def main():
 	args = sys.argv[1:]
 
 	if not args:
-		print 'usage: nodes time edge_time'
+		print('usage: nodes time edge_time')
 		sys.exit(1)
 
 	N = int(args[0])
@@ -226,6 +236,7 @@ def main():
 	ET = int(args[2])
 
 	program(N, T, ET)
+
 
 if __name__ == '__main__':
   main()
