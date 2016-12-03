@@ -109,22 +109,19 @@ def update_graph(adjacency_matrix, grobj):
 	return(grobj)
 
 
-def show_graph(adjacency_matrix, n):
+def init_graph(adjacency_matrix, n):
 	# given an adjacency matrix use networkx and matlpotlib to plot the graph
 	rows, cols = np.where(adjacency_matrix == 1)
 	edges = zip(rows.tolist(), cols.tolist())
 	gr = nx.Graph()
 
-	labels = {}
-	for i in range(0,n):
-		labels[i] = str(i)
+	labels = {i:str(i) for x in range(n)}
 
-	size = []
-	for k in range(0,n):
-		xcoord = (1./5)*n*math.cos(2*math.pi*k/n)
-		ycoord = (1./5)*n*math.sin(2*math.pi*k/n)
+	size = [500 for x in labels]
+	for k in range(n):
+		xcoord = (1/5)*n*math.cos(2*math.pi*k/n)
+		ycoord = (1/5)*n*math.sin(2*math.pi*k/n)
 		gr.add_node(k, pos=(xcoord,ycoord))
-		size += [500]
 
 	gr.add_edges_from(edges)
 
@@ -178,7 +175,7 @@ def program(N, T, ET):
 	U = linalg.expm(-1j*H*dt)
 
 	# Create the graph object
-	graphobj, figobj = show_graph(ram, N)
+	graphobj, figobj = init_graph(ram, N)
 
 	# Find the position of the nodes in the graph object
 	pos = nx.get_node_attributes(graphobj, 'pos')
